@@ -14,12 +14,6 @@ except ImportError:
     import elementtree.ElementTree as ET
 
 
-""" This script can be used to snapshot a domain.
-    In addition it can remove older snapshots.
-    Can be used in a cronjob
-"""
-
-
 LOG = logging.getLogger(__name__)
 
 
@@ -76,6 +70,10 @@ In addition use snapshot creation and deletion flags
 Will override snapshot name and description if provided.
 File or XML tree. Example:
 https://libvirt.org/formatsnapshot.html#example""")
+
+    parser.add_argument('--qemu-uri', metavar='uri', type=str,
+                        default='qemu:///system',
+                        help='Libvirt/Qemu connection URI. Default: %(default)s')
 
     parser.add_argument('--domain', metavar='name', type=str,
                         required=True,
@@ -192,11 +190,11 @@ def delete_older_snapshots(dom, keep, flags=0):
         except Exception as e:
             LOG.warning("Skip item, not found? %s" % e)
             continue
-        LOG.debug("Try delete snapshot '%s' time %s" % (name,
-                  time.strftime('%Y-%m-%d %H:%M:%S',
-                                time.localtime(int(c_time))
-                               )
-                 ))
+        LOG.info("Delete snapshot '%s' time %s" % (name,
+                 time.strftime('%Y-%m-%d %H:%M:%S',
+                               time.localtime(int(c_time))
+                              )
+                ))
         try:
             snapshot.delete(flags=flags) 
         except Exception as e:
@@ -204,9 +202,9 @@ def delete_older_snapshots(dom, keep, flags=0):
                       (name, e))
 
 
-def connect_libvirt():
+def connect_libvirt(qemu_uri):
     # Connect to libvirt
-    conn = libvirt.open('qemu:///system')
+    conn = libvirt.open(qemu_uri)
     if conn is None:
         LOG.error('Failed to open connection to the hypervisor\n')
         sys.exit(1)
@@ -234,9 +232,11 @@ def do_snapshot():
         sys.stderr.write("Error parsing arguments: %s\n" % e)
         sys.exit(1)
 
+    # Set logger config
     set_logger(debug=args.debug)
 
-    conn = connect_libvirt()
+    # Connect to libvirt
+    conn = connect_libvirt(args.qemu_uri)
     try:
         dom = conn.lookupByName(args.domain)
     except libvirt.libvirtError:
@@ -244,8 +244,10 @@ def do_snapshot():
         sys.exit(1)
     LOG.debug('Connected to libvirt')
 
+    # Delete older snapshots
     delete_older_snapshots(dom, keep=args.keep, flags=args.del_flags)
 
+    # Prepare snapshot XML
     snap_name = args.snapshot_name if args.snapshot_name else int(time.time())
     if not args.snapshot_xml:
         snapshot_xml = """<domainsnapshot>
@@ -254,7 +256,8 @@ def do_snapshot():
                           </domainsnapshot>""" % \
                        (args.desc, snap_name)
     LOG.debug("Snapshot XML: %s" % snapshot_xml)
-    LOG.debug('Try snapshotting domain %s' % dom.name())
+
+    LOG.info('Snapshotting domain %s' % dom.name())
     try:
         snapshot = dom.snapshotCreateXML(snapshot_xml, flags=args.flags)
     except Exception as e:
@@ -262,7 +265,8 @@ def do_snapshot():
         sys.exit(1)
 
     LOG.debug(snapshot.getXMLDesc())
-    LOG.info("Snapshot %s created successfully" % snap_name)
+    LOG.info("Snapshot %s for %s created successfully" %
+             (snap_name, dom.name()))
 
 
 if __name__ == "__main__":
