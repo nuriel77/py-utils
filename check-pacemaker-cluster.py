@@ -16,7 +16,7 @@ except ImportError:
 """ Check for pacemaker cluster health
     Also checks resources and history
     Can verify stonith configuration
-    Nuriel Shem-Tov <nuriel@jexia.com>
+    Nuriel Shem-Tov <nurielst@hotmail.com>
 """
 
 
