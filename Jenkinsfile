@@ -6,7 +6,7 @@ pipeline {
   stages {
     stage('start') {
       steps {
-        sh 'echo "${params.payload}"'
+        sh 'env'
       }
     }
   }
