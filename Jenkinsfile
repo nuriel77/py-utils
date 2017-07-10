@@ -3,7 +3,7 @@ pipeline {
   stages {
     stage('start') {
       steps {
-        sh 'echo yes'
+        sh 'env'
       }
     }
   }
