@@ -1,6 +1,8 @@
 pipeline {
   agent any
-  options([[$class: 'RebuildSettings', autoRebuild: false, rebuildDisabled: false], parameters([string(defaultValue: '{}', description: 'payload', name: 'payload')]), pipelineTriggers([])])
+  parameters {
+    string(defaultValue: '{}', description: 'payload', name: 'payload')
+  }
   stages {
     stage('start') {
       steps {
