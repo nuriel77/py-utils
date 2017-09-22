@@ -124,7 +124,7 @@ def run():
                 if (node["pm_addr"] == ironic_node.driver_info["ipmi_address"] and \
                     'controller' in instance.name):
                     print('pcs stonith create stonith-{} fence_ipmilan'
-                          ' pcmk_host_list="{}" ipaddr="{}" action="reboot"'
+                          ' pcmk_host_list="{}" ipaddr="{}" action="poweroff"'
                           ' login="{}" passwd="{}" lanplus="true" delay=20'
                           ' op monitor interval=60s'.format(instance.name,
                                                             instance.name,
